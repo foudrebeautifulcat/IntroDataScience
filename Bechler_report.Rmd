@@ -1,0 +1,375 @@
+---
+title: "Sentiment analysis on the title of movies tested to the Bechdel test"
+author: "Coraline Guignard"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: cosmo
+bibliography: "C://Users//corag//Desktop//bechdel_bibliography.bib"
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(tidytext)
+library("data.table")
+library("bibtex")
+library(knitr)
+```
+
+
+
+***
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(jsonlite)
+bechdel <- fromJSON('C://Users//corag//Documents//Cognitive sience//getAllMovies.json')
+
+#did not work
+#bechdel <- fromJSON("getAllMovies.json", sep = " ")
+```
+# introduction
+
+## The Bechdel test's history
+
+In audiovisual works, there are marked inequalities and discrimination. For instance in cinema industry, there is an underrepresentation of women. Indeed, for each woman per film,  there are 3 male characters [@micic_female_2015]. It influences the stereotype that considers women as not important or invisible because the media are involved in the construction of the social word on gender [@micic_female_2015].
+Because of this issue, test like the Bechdel test has been created. Created by Alison Bechdel in 1985, The test Bechdel is defined in this way :
+
+>>> «The Bechdel Test gives films a pass or fail rating based on three linked criteria: “One, it has to have at least two women in it who, two, talk to each other about, three, something besides a man.” » [@selisker_bechdel_2015, p.505]
+
+The goal is to represent the silence suffered by women by observing their presence in movies [@noauthor_what_nodate].  It is a known test that has been used since 2013 in Swedish cinemas with the ratings of the others [@selisker_bechdel_2015]. However, there is a big controversy on this test since the first intention was not to produce a serious model, but more a part of a story in a comic “the Rule” (1965) [@noauthor_what_nodate]. For this reason, it is not exhaustive and it misses important sexist acts. 
+On one hand, it does not take into account beauty standards and hypersexualization. It also misses the intersectional discrimination that creates a hierarchy on the representation of women [@noauthor_what_nodate]. 
+On another hand, the Bechdel test is not enough precise in its criteria. For the third condition (talk about something else than a man) it is important to know what the women talk about, why, where, and when [@lakhotia_identifying_2019]. Indeed, because of different stereotypes, a discussion of two women can also reflect sexism even if it is not about a man [@noauthor_what_nodate].
+To see a synthesis of the positive effect and missed criteria of this test, you can check this article : [@noauthor_what_nodate](https://pdxscholar.library.pdx.edu/cgi/viewcontent.cgi?article=1834&context=honorstheses) 
+
+However, even with these objections, the movies that pass the Bechdel test seem to have a different effect than the ones that did not pass. In the content of films, it seems to, in comparison to movies that did not pass the test, the ones that pass are more centrally connected women. [@agarwal_key_2015]. It seems also to have a practical effect on social media. The trailers that did not seem to pass the Bechdel test seem more popular, but the female users share more of the ones that pass the Bechdel test. One of the reasons could be either fiction influencing behavior and gender bias or the contrary or a combination of both [@garcia_gender_2014] Whatever the right mechanism, reality, and fiction seem to be related, and evidence can be found on both sides. For this reason, it would be still relevant to study artworks through the Bechdel rule.
+
+### Impact of the title of movies 
+
+The title is one of the things that are visible to the spectator before they see the film. Even if what advantages a movie is often the fame of the director and cast that goes with a big budget, the title of the movie is also a way to make the movie more interesting. Indeed, their effect has been studied, and an informative title would have more impact in the first weeks of release [@bae_impact_2019]. So, this could imply that title of the movie reflected a part of the content. Nevertheless, The research on the impact of the movie’s title is still low [@bae_impact_2019]. Studies about the Bechdel movie’s title do not does not contradict.this observation. For this reason, I cannot precise my assumption about the impact of the title of Bechdel movies and my study will be only descriptive. 
+
+## Gender stereotype in sentiment
+
+Gender stereotypes can be understood through the social role Theory which is the idea that the inequality of gender is shaped by their roles in society. For this reason, « Media most often represent boys and men as active, adventurous, powerful, sexually aggressive, and largely uninvolved in human relationships, and represent girls and women as young, thin, beautiful, passive, dependent, and often incompetent » [@micic_female_2015, p.21]. On this way, on one hand, sentiments are also related to gender stereotypes [@bhaskaran_good_2019]. For example, in politics, the moral and behavioral, and physical aspects have stronger negative sentiments on online news outlets than men [@brugnoli_gender_2022]. The importance of emotion does not perceive the same between gender. Indeed, women seem to be emotional while men would be rational [@garcia_gender_2014]. It is observed in scientific talks like TED Talks where the comment was more personal and emotional when the presenter was a woman [@amarasekara_exploring_2019].
+On the other hand, some specific emotions would be more “male” and some would be more “female”. For example, we predict that men will be more angry, scared, and sad and women having more positive emotions [@kiritchenko_examining_2018]. Gender bias seems also to avoid some emotion depending on gender: for example, Women seems less show less anger than men because it would be discredited them [@van_breen_mind_nodate]. 
+
+##	Purpose of my research
+
+Through this information about the Bechdel test, the title of the movie, and sentiment discriminated through gender, my question of the research is “Does the result of the Bechdel test have an impact on the presence of sentiment on the title of the movie ?” As the movie that passes the Bechdel test is assumed to represent women better, it could include more female aspect stereotypes in opposite to the films that did not pass where male aspect stereotypes would be more present. Since the title of the movie can be informative, hypnotically, it could be influenced by the importance of the female character for the ones that pass the Bechdel test. As it was observed, some sentiments can be more present with movies that did not pass the test and others more present with the ones that passed it. The null hypothesis is there is no significant difference between the mean of sentiment between the movie that did not pass the Bechdel test and the ones that pass it. The alternative hypothesis is there is a significant difference between the mean of sentiment between the movie that did not pass the Bechdel test and the ones that pass it. My prediction is that the alternative hypothesis will be accepted.
+
+
+
+# method
+
+## collecting data
+
+The dataset is from the website [bechdeltest.com](https://bechdeltest.com/). It is still active and news films continue to be added. When I use this data set, it contained 9630 movies from 1874 to 2022. The rating assignment is made by the visitors. It is possible to contest the rates and a webmaster will be updated by sets flag. So the limitation of this data set is the subjectivity of the rater even the continuous feedback since the way everyone rates can be different since some movies can be ambiguous. However, the research tries to resolve it by creating an automatic Bechdel test see [@lakhotia_identifying_2019](https://arxiv.org/ftp/arxiv/papers/1907/1907.03702.pdf)
+
+
+## modeling data
+
+I use some r packages: 
+
+* ggplot2
+* dplyr
+* tidyverse
+* tada.table
+* dtidytext
+
+For my study, I used the lexical approach which identifies the sentiment of a word by building a lexicon (a dictionary of sentiment) and mapping words to it. 
+
+There are several kinds of sentimental lexicon. The one I used for this experiment is [nrc](https://nrc.canada.ca/en/research-development/products-services/technical-advisory-services/sentiment-emotion-lexicons).
+
+I did two tests. For both of them, I had to modify my data table. I selected the column of titles according to their rank on the Bechdel test. Then I used the unnest_tockens() function to differentiate each word from the titles so that I could analyse each word separately. Then I used the inner_join() function to take only the words. Indeed, if I hadn't done this, as the words follow the [tac] rule, there would be words with no sentimental meaning like "of" or "the" which would have made the results confusing. 
+After modelling my data table, my first step is to compare the frequency of words between the film titles that passed the bechdel test and the others. I separated the ones that didn't pass the test into 3 rankings "0", maximum 1 woman, "1", two women but not talking, "2", two women talking but only men. So I counted the number of words per rating, then I made the proportion for each of them. 
+Finally, I did a correlation test to check the observable finding on the graph.
+For the second experiment, I wanted to analyse precisely which feelings were involved in the different levels of the bechdel test result. I therefore used the same group separation as for my first test. This time I used the summarize() function, grouping the different words by sentiment to find out how many words use a certain sentiment.
+ 
+ 
+# result
+
+For the frequency experimentation :
+
+Pearson's product-moment
+	correlation
+
+Comparaison between rating "0" and pass :
+t = 14.258, df = 222, p-value <
+2.2e-16
+alternative hypothesis: true correlation is not equal to 0
+95 percent confidence interval:
+ 0.6161450 0.7541245
+sample estimates:
+      cor 
+0.6913872
+
+
+Comparaison between rating "1" and pass :
+t = 17.8, df = 324, p-value <
+2.2e-16
+alternative hypothesis: true correlation is not equal to 0
+95 percent confidence interval:
+ 0.6436841 0.7541674
+sample estimates:
+      cor 
+0.7031451
+
+
+Comparaison between rating "2" and pass :
+t = 12.738, df = 204, p-value <
+2.2e-16
+alternative hypothesis: true correlation is not equal to 0
+95 percent confidence interval:
+ 0.5818459 0.7353939
+sample estimates:
+      cor 
+0.6656055
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.show='hold'}
+#fig of frequency
+
+#take title from rating 3
+title_rating3 <- bechdel %>%
+  filter(rating ==3 ) %>%
+  select(title)
+
+#take title from rating 2
+title_rating2 <- bechdel %>%
+  filter(rating ==2 ) %>%
+  select(title)
+
+
+#take title from rating 1
+title_rating1 <- bechdel %>%
+  filter(rating ==1 ) %>%
+  select(title)
+
+
+#take title from rating 0
+title_rating0 <- bechdel %>%
+  filter(rating ==0 ) %>%
+  select(title)
+
+
+#for the movie that pass the bechdel test
+words3 <- title_rating3 %>%
+  unnest_tokens(word, title) %>%
+  inner_join(get_sentiments("nrc"))
+  
+
+# for movies that didn't pass the test
+words0 <- title_rating0 %>%
+  unnest_tokens(word, title)%>%
+  inner_join(get_sentiments("nrc"))
+
+words2 <- title_rating2 %>%
+  unnest_tokens(word, title)%>%
+  inner_join(get_sentiments("nrc"))
+
+words1 <- title_rating1 %>%
+  unnest_tokens(word, title)%>%
+  inner_join(get_sentiments("nrc"))
+
+
+#check frequence
+frequency <- bind_rows(mutate(words3, rating = "pass"),
+                       mutate(words0, rating = "0"),
+                       mutate(words1, rating = "1"),
+                       mutate(words2, rating = "2")) %>% 
+  mutate(word = str_extract(word, "[a-z']+")) %>%
+  count(rating, word) %>%
+  group_by(rating) %>%
+  mutate(proportion = n / sum(n)) %>% 
+  select(-n) %>% 
+  pivot_wider(names_from = rating, values_from = proportion) %>%
+  pivot_longer(`2`:`0`,
+               names_to = "rating", values_to = "proportion")
+
+#create a plot of that
+library(scales)
+
+# expect a warning about rows with missing values being removed
+ggplot(frequency, aes(x = proportion, y = `pass`, 
+                      color = abs(`pass` - proportion))) +
+  geom_abline(color = "#C576F6", lty = 2) +
+  geom_jitter(alpha = 0.1, size = 2.5, width = 0.3, height = 0.3) +
+  geom_text(aes(label = word), check_overlap = TRUE, vjust = 1.5) +
+  scale_x_log10(labels = percent_format()) +
+  scale_y_log10(labels = percent_format()) +
+  scale_color_gradient(limits = c(0, 0.05), 
+                       low = "#51087E", high = "#7954A1") +
+  facet_wrap(~rating, ncol = 4) +
+  theme(legend.position="none") +
+  labs(y = "pass", x = NULL) +
+   ggtitle("Comparison of word frequencies in the Bechdel test rankings")+
+  theme(plot.title = element_text(hjust=0.5))
+
+#correlation test to check the frequency's difference
+
+#level 0 = 0.6913872 
+cor.test(data = frequency[frequency$rating == "0",],
+         ~ proportion + `pass`)
+
+#level 1 = 0.7031451
+cor.test(data = frequency[frequency$rating == "1",],
+         ~ proportion + `pass`)
+
+#level 2  = 0.6656055
+cor.test(data = frequency[frequency$rating == "2",],
+         ~ proportion + `pass`)
+```
+The plot's code is from the website [tidytextmining.com](https://www.tidytextmining.com/tidytext.html)
+
+The shape of this graph does not show much difference in the distribution of words. With the statsitcs result of the correlations between the levels, we see that the difference is small. The word frequencies seem to differ more with level "2" with 0.6656055 than with level "0" 0.6913872 and level "3" with a correlation of 0.7031451.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.show='hold'}
+#Frequency overall
+
+nrc_sentiment <- get_sentiments("nrc")
+#take title from rating 3
+title_rating3 <- bechdel %>%
+  filter(rating ==3 ) %>%
+  select(title)
+
+words3 <- title_rating3 %>%
+  unnest_tokens(word, title) %>%
+  inner_join(get_sentiments("nrc"))
+
+#take title from rating that did not pass
+title_rating_notpass <- bechdel %>%
+  filter(rating < 3 ) %>%
+  select(title)
+
+words_notpass <- title_rating_notpass %>%
+  unnest_tokens(word, title)%>%
+  inner_join(get_sentiments("nrc"))
+
+
+#correaltion of group  = 0.6942183 
+cor.test(data = frequency[frequency$rating < 2,],
+         ~ proportion + `pass`)
+
+```
+***
+
+
+The plot's code is from the website [datacamp.com](https://www.datacamp.com/tutorial/sentiment-analysis-R)
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.show='hold'}
+
+# for this plot, I want to know by statistic if there is a significant difference  between the sentiments that I found within the different levels (0, 1, 2, and pass) but I do not know how...
+
+
+# observe more precisely which feelings are more observable in one of the cases
+
+nrc_sentiment <- get_sentiments("nrc")
+
+#take title from rating 3
+title_rating3 <- bechdel %>%
+  filter(rating ==3 ) %>%
+  select(title)
+  
+  #take title from rating 2
+title_rating2 <- bechdel %>%
+  filter(rating ==2 ) %>%
+  select(title)
+
+
+#take title from rating 1
+title_rating1 <- bechdel %>%
+  filter(rating ==1 ) %>%
+  select(title)
+
+
+#take title from rating 0
+title_rating0 <- bechdel %>%
+  filter(rating ==0 ) %>%
+  select(title)
+
+#########################################
+
+#for the movie that pass the bechdel test
+words3 <- title_rating3 %>%
+  unnest_tokens(word, title) %>%
+  inner_join(get_sentiments("nrc")) %>%
+  group_by(sentiment) %>%
+  summarise(word_count = n())
+words3
+
+
+# for movies that didn't pass the test
+words0 <- title_rating0 %>%
+  unnest_tokens(word, title) %>%
+  inner_join(get_sentiments("nrc")) %>%
+  group_by(sentiment) %>%
+  summarise(word_count = n())
+
+words2 <- title_rating2 %>%
+  unnest_tokens(word, title) %>%
+  inner_join(get_sentiments("nrc")) %>%
+  group_by(sentiment) %>%
+  summarise(word_count = n())
+
+words1 <- title_rating1 %>%
+  unnest_tokens(word, title) %>%
+  inner_join(get_sentiments("nrc"))%>%
+  group_by(sentiment) %>%
+  summarise(word_count = n())
+
+  
+
+#########################################
+
+#try to do only one plot with all these things
+
+nrc_plot <- bind_rows(mutate(words3, rating = "pass"),
+                       mutate(words0, rating = "0"),
+                       mutate(words1, rating = "1"),
+                       mutate(words2, rating = "2")) %>%
+  mutate(sentiment = reorder(sentiment, word_count)) %>%
+  ggplot(aes(sentiment, word_count, fill = word_count)) +
+  geom_col(aes(fill = rating)) +
+  guides(fill = "none") + #Turn off the legend
+  labs(x = NULL, y = NULL) +
+  ggtitle("sentiments between the movies' rankings") +
+  coord_flip() +
+  theme(plot.title = element_text(hjust=0.5)) +
+  scale_fill_manual(values = c("#D19FC6", "#C55FFC", "#7954A1", "#341948"))
+plot(nrc_plot) + facet_wrap(~rating, ncol = 4)
+
+```
+With this graph, we observe that there is little difference in the feelings between the different ratings of the test. For the "0" rating, we observe that there are more negative than positive words compared to the other groups. Otherwise, for all groups, it seems that the strongest feeling is fear.
+
+# Discussion
+
+## conclusion
+
+With these two tests, we therefore notice that there does not seem to be any significant differences between the feelings found in the titles of the films that pass the Bechdel test and those that do not. This does not contradict the results of the previously cited articles, as none of them provided a clear prediction on my research question.
+
+## Limitation
+
+### State of art
+I do not find precise information about the subject of sentiment analysis for the title of movies that were tested to the Bechdel test. So, I directed my study with numerous typical assumptions. 
+
+
+###	Data set
+It is a big generalization because the movies are also constructed differently depending on the budget. For example, with low promotional budgets having an informative title is important  (Bae & Kim, 2019). but not for a blockbuster my analysis was only focused on the factor of rating in the Bechdel test.
+
+###	nrc package
+
+There are several lexicons of feeling and constructed in different ways. For example, some lexicons will focus on putting scales between negative and positive instead of defining a feeling. Others will use other feelings and even those that use the same classification are not necessarily the same. Indeed, the ratio of words that can be defined positively and words that can be defined negatively and other elements of the classification, can be different and therefore we do not get the same results depending on which one is used
+
+
+### further direction
+
+It would be interesting to observe if there is more sentiment words in bechdel test since the stereotype is also woman are consider as more emotional.
+
+# bibliography
