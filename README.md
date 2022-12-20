@@ -1,4 +1,4 @@
-
+Please prefer the RMD version (more beautiful and a better plot)
 ------------------------------------------------------------------------
 
 # introduction
